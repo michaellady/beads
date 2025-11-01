@@ -23,10 +23,10 @@ var createCmd = &cobra.Command{
 		// If file flag is provided, parse markdown and create multiple issues
 		if file != "" {
 			if len(args) > 0 {
-				fmt.Fprintf(os.Stderr, "Error: cannot specify both title and --file flag\n")
-				os.Exit(1)
+			fmt.Fprintf(os.Stderr, "Error: cannot specify both title and --file flag\n")
+			os.Exit(1)
 			}
-			createIssuesFromMarkdown(cmd, file)
+			createIssuesFromMarkdown(file)
 			return
 		}
 

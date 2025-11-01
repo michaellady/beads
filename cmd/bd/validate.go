@@ -76,11 +76,11 @@ Example:
 			case "orphans":
 				results.checks["orphans"] = validateOrphanedDeps(ctx, allIssues, fixAll)
 			case "duplicates":
-				results.checks["duplicates"] = validateDuplicates(ctx, allIssues, fixAll)
+				results.checks["duplicates"] = validateDuplicates(allIssues, fixAll)
 			case "pollution":
-				results.checks["pollution"] = validatePollution(ctx, allIssues, fixAll)
+				results.checks["pollution"] = validatePollution(allIssues, fixAll)
 			case "conflicts":
-				results.checks["conflicts"] = validateGitConflicts(ctx, fixAll)
+				results.checks["conflicts"] = validateGitConflicts(fixAll)
 			}
 		}
 
@@ -88,7 +88,7 @@ Example:
 		if jsonOut {
 			outputJSON(results.toJSON())
 		} else {
-			results.print(fixAll)
+			results.print()
 		}
 
 		// Exit with error code if issues found or errors occurred
@@ -208,7 +208,7 @@ func (r *validationResults) toJSON() map[string]interface{} {
 	return output
 }
 
-func (r *validationResults) print(fixAll bool) {
+func (r *validationResults) print() {
 	green := color.New(color.FgGreen).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
@@ -326,7 +326,7 @@ func validateOrphanedDeps(ctx context.Context, allIssues []*types.Issue, fix boo
 	return result
 }
 
-func validateDuplicates(ctx context.Context, allIssues []*types.Issue, fix bool) checkResult {
+func validateDuplicates(allIssues []*types.Issue, fix bool) checkResult {
 	result := checkResult{name: "duplicates"}
 
 	// Find duplicates
@@ -350,7 +350,7 @@ func validateDuplicates(ctx context.Context, allIssues []*types.Issue, fix bool)
 	return result
 }
 
-func validatePollution(ctx context.Context, allIssues []*types.Issue, fix bool) checkResult {
+func validatePollution(allIssues []*types.Issue, fix bool) checkResult {
 	result := checkResult{name: "test pollution"}
 
 	// Detect pollution
@@ -369,7 +369,7 @@ func validatePollution(ctx context.Context, allIssues []*types.Issue, fix bool) 
 	return result
 }
 
-func validateGitConflicts(ctx context.Context, fix bool) checkResult {
+func validateGitConflicts(fix bool) checkResult {
 	result := checkResult{name: "git conflicts"}
 
 	// Check JSONL file for conflict markers

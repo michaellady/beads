@@ -203,7 +203,6 @@ func TestValidateOrphanedDeps(t *testing.T) {
 }
 
 func TestValidateDuplicates(t *testing.T) {
-	ctx := context.Background()
 
 	allIssues := []*types.Issue{
 		{
@@ -220,7 +219,7 @@ func TestValidateDuplicates(t *testing.T) {
 		},
 	}
 
-	result := validateDuplicates(ctx, allIssues, false)
+	result := validateDuplicates(allIssues, false)
 
 	// Should find 1 duplicate (bd-2 is duplicate of bd-1)
 	if result.issueCount != 1 {
@@ -232,7 +231,6 @@ func TestValidateDuplicates(t *testing.T) {
 }
 
 func TestValidatePollution(t *testing.T) {
-	ctx := context.Background()
 
 	allIssues := []*types.Issue{
 		{
@@ -245,7 +243,7 @@ func TestValidatePollution(t *testing.T) {
 		},
 	}
 
-	result := validatePollution(ctx, allIssues, false)
+	result := validatePollution(allIssues, false)
 
 	// Should detect test-1 as pollution
 	if result.issueCount != 1 {
@@ -254,7 +252,6 @@ func TestValidatePollution(t *testing.T) {
 }
 
 func TestValidateGitConflicts_NoFile(t *testing.T) {
-	ctx := context.Background()
 
 	// Create temp dir without JSONL
 	tmpDir := t.TempDir()
@@ -268,7 +265,7 @@ func TestValidateGitConflicts_NoFile(t *testing.T) {
 	dbPath = filepath.Join(beadsDir, "beads.db")
 	defer func() { dbPath = originalDBPath }()
 
-	result := validateGitConflicts(ctx, false)
+	result := validateGitConflicts(false)
 
 	if result.issueCount != 0 {
 		t.Errorf("issueCount = %d, want 0 (no file)", result.issueCount)
@@ -279,7 +276,6 @@ func TestValidateGitConflicts_NoFile(t *testing.T) {
 }
 
 func TestValidateGitConflicts_WithMarkers(t *testing.T) {
-	ctx := context.Background()
 
 	// Create temp JSONL with conflict markers
 	tmpDir := t.TempDir()
@@ -306,7 +302,7 @@ func TestValidateGitConflicts_WithMarkers(t *testing.T) {
 	dbPath = filepath.Join(beadsDir, "beads.db")
 	defer func() { dbPath = originalDBPath }()
 
-	result := validateGitConflicts(ctx, false)
+	result := validateGitConflicts(false)
 
 	if result.issueCount != 1 {
 		t.Errorf("issueCount = %d, want 1 (conflict found)", result.issueCount)
@@ -317,7 +313,6 @@ func TestValidateGitConflicts_WithMarkers(t *testing.T) {
 }
 
 func TestValidateGitConflicts_Clean(t *testing.T) {
-	ctx := context.Background()
 
 	// Create temp JSONL without conflicts
 	tmpDir := t.TempDir()
@@ -339,7 +334,7 @@ func TestValidateGitConflicts_Clean(t *testing.T) {
 	dbPath = filepath.Join(beadsDir, "beads.db")
 	defer func() { dbPath = originalDBPath }()
 
-	result := validateGitConflicts(ctx, false)
+	result := validateGitConflicts(false)
 
 	if result.issueCount != 0 {
 		t.Errorf("issueCount = %d, want 0 (clean file)", result.issueCount)

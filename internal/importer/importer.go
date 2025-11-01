@@ -68,7 +68,7 @@ func ImportIssues(ctx context.Context, dbPath string, store storage.Storage, iss
 	}
 
 	// Get or create SQLite store
-	sqliteStore, needCloseStore, err := getOrCreateStore(ctx, dbPath, store)
+	sqliteStore, needCloseStore, err := getOrCreateStore(dbPath, store)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func ImportIssues(ctx context.Context, dbPath string, store storage.Storage, iss
 }
 
 // getOrCreateStore returns an existing storage or creates a new one
-func getOrCreateStore(ctx context.Context, dbPath string, store storage.Storage) (*sqlite.SQLiteStorage, bool, error) {
+func getOrCreateStore(dbPath string, store storage.Storage) (*sqlite.SQLiteStorage, bool, error) {
 	if store != nil {
 		sqliteStore, ok := store.(*sqlite.SQLiteStorage)
 		if !ok {

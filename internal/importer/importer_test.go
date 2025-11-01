@@ -794,7 +794,7 @@ func TestGetOrCreateStore_ExistingStore(t *testing.T) {
 	}
 	defer store.Close()
 	
-	result, needClose, err := getOrCreateStore(ctx, tmpDB, store)
+	result, needClose, err := getOrCreateStore(tmpDB, store)
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
@@ -819,7 +819,7 @@ func TestGetOrCreateStore_NewStore(t *testing.T) {
 	initStore.Close()
 	
 	// Test creating new connection
-	result, needClose, err := getOrCreateStore(ctx, tmpDB, nil)
+	result, needClose, err := getOrCreateStore(tmpDB, nil)
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
@@ -836,7 +836,7 @@ func TestGetOrCreateStore_NewStore(t *testing.T) {
 func TestGetOrCreateStore_EmptyPath(t *testing.T) {
 	ctx := context.Background()
 	
-	_, _, err := getOrCreateStore(ctx, "", nil)
+	_, _, err := getOrCreateStore("", nil)
 	if err == nil {
 		t.Error("Expected error for empty database path")
 	}

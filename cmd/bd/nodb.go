@@ -54,7 +54,7 @@ func initializeNoDbMode() error {
 	}
 
 	// Detect and set prefix
-	prefix, err := detectPrefix(beadsDir, memStore)
+	prefix, err := detectPrefix(memStore)
 	if err != nil {
 		return fmt.Errorf("failed to detect prefix: %w", err)
 	}
@@ -114,7 +114,7 @@ func loadIssuesFromJSONL(path string) ([]*types.Issue, error) {
 // 1. issue-prefix from config.yaml (if set)
 // 2. Common prefix from existing issues (if all share same prefix)
 // 3. Current directory name (fallback)
-func detectPrefix(beadsDir string, memStore *memory.MemoryStorage) (string, error) {
+func detectPrefix(memStore *memory.MemoryStorage) (string, error) {
 	// Check config.yaml for issue-prefix
 	configPrefix := config.GetString("issue-prefix")
 	if configPrefix != "" {
