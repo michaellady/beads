@@ -46,7 +46,7 @@ func findJSONLPath() string {
 	// Ensure the directory exists (important for new databases)
 	// This is the only difference from the public API - we create the directory
 	dbDir := filepath.Dir(dbPath)
-	if err := os.MkdirAll(dbDir, 0755); err != nil {
+	if err := os.MkdirAll(dbDir, 0750); err != nil { // #nosec G301 - restricted to user+group only
 		// If we can't create the directory, return discovered path anyway
 		// (the subsequent write will fail with a clearer error)
 		return jsonlPath
@@ -63,7 +63,7 @@ func autoImportIfNewer() {
 	jsonlPath := findJSONLPath()
 
 	// Read JSONL file
-	jsonlData, err := os.ReadFile(jsonlPath)
+	jsonlData, err := os.ReadFile(jsonlPath) // #nosec G304 - path is controlled by internal findJSONLPath()
 	if err != nil {
 		// JSONL doesn't exist or can't be accessed, skip import
 		if os.Getenv("BD_DEBUG") != "" {
@@ -405,7 +405,7 @@ func validateJSONLIntegrity(ctx context.Context, jsonlPath string) error {
 	}
 	
 	// Read current JSONL file
-	jsonlData, err := os.ReadFile(jsonlPath)
+	jsonlData, err := os.ReadFile(jsonlPath) // #nosec G304 - path is controlled by internal findJSONLPath()
 	if err != nil {
 		if os.IsNotExist(err) {
 			// JSONL doesn't exist but we have a stored hash - clear export_hashes
@@ -446,7 +446,7 @@ func writeJSONLAtomic(jsonlPath string, issues []*types.Issue) ([]string, error)
 
 	// Create temp file with PID suffix to avoid collisions (bd-306)
 	tempPath := fmt.Sprintf("%s.tmp.%d", jsonlPath, os.Getpid())
-	f, err := os.Create(tempPath)
+	f, err := os.Create(tempPath) // #nosec G304 - tempPath derived from internal jsonlPath
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
@@ -514,8 +514,8 @@ func writeJSONLAtomic(jsonlPath string, issues []*types.Issue) ([]string, error)
 		return nil, fmt.Errorf("failed to rename file: %w", err)
 	}
 
-	// Set appropriate file permissions (0644: rw-r--r--)
-	if err := os.Chmod(jsonlPath, 0644); err != nil {
+	// Set appropriate file permissions (0600: rw-------)
+	if err := os.Chmod(jsonlPath, 0600); err != nil { // #nosec G302 - restricted to user only
 		// Non-fatal - file is already written
 		if os.Getenv("BD_DEBUG") != "" {
 			fmt.Fprintf(os.Stderr, "Debug: failed to set file permissions: %v\n", err)
@@ -646,7 +646,7 @@ func flushToJSONL() {
 	// Read existing JSONL into a map (skip for full export - we'll rebuild from scratch)
 	issueMap := make(map[string]*types.Issue)
 	if !fullExport {
-		if existingFile, err := os.Open(jsonlPath); err == nil {
+		if existingFile, err := os.Open(jsonlPath); err == nil { // nolint:gosec // G304 - path from internal findJSONLPath()
 			scanner := bufio.NewScanner(existingFile)
 			lineNum := 0
 			for scanner.Scan() {
@@ -715,7 +715,7 @@ func flushToJSONL() {
 	}
 
 	// Store hash of exported JSONL (fixes bd-84: enables hash-based auto-import)
-	jsonlData, err := os.ReadFile(jsonlPath)
+	jsonlData, err := os.ReadFile(jsonlPath) // #nosec G304 - path from internal findJSONLPath()
 	if err == nil {
 		hasher := sha256.New()
 		hasher.Write(jsonlData)

@@ -331,8 +331,9 @@ func gitPull(ctx context.Context) error {
 		return fmt.Errorf("failed to get current branch: %w", err)
 	}
 	branch := strings.TrimSpace(string(branchOutput))
-	
+
 	// Get remote name for current branch (usually "origin")
+	// #nosec G204 - git command with sanitized branch name from git itself
 	remoteCmd := exec.CommandContext(ctx, "git", "config", "--get", fmt.Sprintf("branch.%s.remote", branch))
 	remoteOutput, err := remoteCmd.Output()
 	if err != nil {
@@ -340,8 +341,9 @@ func gitPull(ctx context.Context) error {
 		remoteOutput = []byte("origin\n")
 	}
 	remote := strings.TrimSpace(string(remoteOutput))
-	
+
 	// Pull with explicit remote and branch
+	// #nosec G204 - remote and branch names from git config/branch output, sanitized
 	cmd := exec.CommandContext(ctx, "git", "pull", remote, branch)
 	output, err := cmd.CombinedOutput()
 	if err != nil {

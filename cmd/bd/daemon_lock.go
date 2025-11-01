@@ -172,11 +172,7 @@ func validateDaemonLock(beadsDir string, expectedDB string) error {
 	}
 	
 	// Version mismatch is a warning, not a hard error (handled elsewhere)
-	// But we return the info for caller to decide
-	if lockInfo.Version != "" && lockInfo.Version != Version {
-		// Not a hard error - version compatibility check happens via RPC
-		// This is just informational
-	}
+	// Version compatibility check happens via RPC
 	
 	return nil
 }

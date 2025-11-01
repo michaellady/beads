@@ -108,7 +108,7 @@ With --no-db: creates .beads/ directory and issues.jsonl file instead of SQLite 
 			// Create empty issues.jsonl file
 			jsonlPath := filepath.Join(localBeadsDir, "issues.jsonl")
 			if _, err := os.Stat(jsonlPath); os.IsNotExist(err) {
-				if err := os.WriteFile(jsonlPath, []byte{}, 0644); err != nil {
+				if err := os.WriteFile(jsonlPath, []byte{}, 0600); err != nil { // #nosec G306 - restricted to user only
 					fmt.Fprintf(os.Stderr, "Error: failed to create issues.jsonl: %v\n", err)
 					os.Exit(1)
 				}
@@ -247,9 +247,8 @@ if isGitRepo() && !hooksInstalled() {
 	if quiet {
 		// Auto-install hooks silently in quiet mode (best default for agents)
 		_ = installGitHooks() // Ignore errors in quiet mode
-	} else {
-		// Defer to interactive prompt below
 	}
+	// else: defer to interactive prompt below
 }
 
 // Skip output if quiet mode

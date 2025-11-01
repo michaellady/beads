@@ -204,7 +204,7 @@ func checkForMergeConflicts(jsonlData []byte, jsonlPath string) error {
 				"  1. Resolve the merge conflict in your Git client, OR\n"+
 				"  2. Export from database to regenerate clean JSONL:\n"+
 				"     bd export -o %s\n\n"+
-				"After resolving, commit the fixed JSONL file.\n", jsonlPath, jsonlPath)
+				"After resolving, commit the fixed JSONL file", jsonlPath, jsonlPath)
 		}
 	}
 	return nil

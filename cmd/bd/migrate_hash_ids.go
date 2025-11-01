@@ -85,7 +85,7 @@ Use --dry-run to preview changes before applying.`,
 			}
 			os.Exit(1)
 		}
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		
 		// Get all issues using SearchIssues with empty query and no filters
 		issues, err := store.SearchIssues(ctx, "", types.IssueFilter{})
@@ -372,17 +372,17 @@ func saveMappingFile(path string, mapping map[string]string) error {
 	if err != nil {
 		return err
 	}
-	
-	return os.WriteFile(path, data, 0644)
+
+	return os.WriteFile(path, data, 0600) // #nosec G306 - restricted to user only
 }
 
 // copyFile copies a file from src to dst
 func copyFile(src, dst string) error {
-	data, err := os.ReadFile(src)
+	data, err := os.ReadFile(src) // #nosec G304 - src is database backup path
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(dst, data, 0644)
+	return os.WriteFile(dst, data, 0600) // #nosec G306 - restricted to user only
 }
 
 func init() {

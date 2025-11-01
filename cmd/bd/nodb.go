@@ -75,11 +75,11 @@ func initializeNoDbMode() error {
 
 // loadIssuesFromJSONL reads all issues from a JSONL file
 func loadIssuesFromJSONL(path string) ([]*types.Issue, error) {
-	file, err := os.Open(path)
+	file, err := os.Open(path) // #nosec G304 - path from internal findJSONLPath()
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var issues []*types.Issue
 	scanner := bufio.NewScanner(file)

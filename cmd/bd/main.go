@@ -373,6 +373,7 @@ var rootCmd = &cobra.Command{
 						// Check for daemon-error file to provide better error message
 						if beadsDir := filepath.Dir(socketPath); beadsDir != "" {
 							errFile := filepath.Join(beadsDir, "daemon-error")
+							// nolint:gosec // G304 - errFile derived from internal socket path
 							if errMsg, readErr := os.ReadFile(errFile); readErr == nil && len(errMsg) > 0 {
 								fmt.Fprintf(os.Stderr, "\n%s\n", string(errMsg))
 								daemonStatus.Detail = string(errMsg)
