@@ -785,8 +785,6 @@ func TestImportIssues_Labels(t *testing.T) {
 }
 
 func TestGetOrCreateStore_ExistingStore(t *testing.T) {
-	ctx := context.Background()
-	
 	tmpDB := t.TempDir() + "/test.db"
 	store, err := sqlite.New(tmpDB)
 	if err != nil {
@@ -807,8 +805,6 @@ func TestGetOrCreateStore_ExistingStore(t *testing.T) {
 }
 
 func TestGetOrCreateStore_NewStore(t *testing.T) {
-	ctx := context.Background()
-	
 	tmpDB := t.TempDir() + "/test.db"
 	
 	// Create initial database
@@ -834,8 +830,6 @@ func TestGetOrCreateStore_NewStore(t *testing.T) {
 }
 
 func TestGetOrCreateStore_EmptyPath(t *testing.T) {
-	ctx := context.Background()
-	
 	_, _, err := getOrCreateStore("", nil)
 	if err == nil {
 		t.Error("Expected error for empty database path")

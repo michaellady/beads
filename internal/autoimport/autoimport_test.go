@@ -389,8 +389,6 @@ func TestCheckForMergeConflicts(t *testing.T) {
 }
 
 func TestParseJSONL(t *testing.T) {
-	notify := &testNotifier{}
-
 	t.Run("valid jsonl", func(t *testing.T) {
 		data := `{"id":"test-1","title":"Issue 1","status":"open","priority":1,"issue_type":"task","created_at":"2024-01-01T00:00:00Z","updated_at":"2024-01-01T00:00:00Z"}
 {"id":"test-2","title":"Issue 2","status":"open","priority":1,"issue_type":"task","created_at":"2024-01-01T00:00:00Z","updated_at":"2024-01-01T00:00:00Z"}`

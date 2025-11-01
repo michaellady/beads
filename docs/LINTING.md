@@ -4,60 +4,37 @@ This document explains our approach to `golangci-lint` warnings in this codebase
 
 ## Current Status
 
-Running `golangci-lint run ./...` currently reports **34 issues** as of Oct 27, 2025. These are not actual code quality problems - they are false positives or intentional patterns that reflect idiomatic Go practice.
+Running `golangci-lint run ./...` currently reports **16 issues** as of Nov 1, 2025. These are not actual code quality problems - they are false positives or intentional patterns that reflect idiomatic Go practice.
 
 **Historical note**: The count was ~200 before extensive cleanup in October 2025. The remaining issues represent the acceptable baseline that doesn't warrant fixing.
 
 ## Issue Breakdown
 
-### errcheck (24 issues)
+### errcheck (1 issue)
 
-**Pattern**: Unchecked errors from `defer` cleanup operations
-**Status**: Intentional and idiomatic
+**Pattern**: Unchecked error from `fmt.Fprintf` in type marshaling
+**Status**: False positive - error handling not needed for string formatting
 
-Examples:
+Example:
 ```go
-defer rows.Close()
-defer tx.Rollback()
-defer os.RemoveAll(tmpDir)  // in tests
+fmt.Fprintf(h, "%d", i.Priority)  // in internal/types/types.go
 ```
 
-**Rationale**: In Go, it's standard practice to ignore errors from deferred cleanup operations:
-- `rows.Close()` - closing already-consumed result sets rarely errors
-- `tx.Rollback()` - rollback on defer is a safety net; if commit succeeded, rollback is a no-op
-- Test cleanup - errors during test cleanup don't affect test outcomes
+**Rationale**: This is a false positive. The `fmt.Fprintf` call is used in a type's `String()` method for debug output. String formatting operations rarely fail, and even if they did, the impact would be minimal (just incorrect debug output).
 
-Fixing these would add noise without improving code quality. The critical cleanup operations (where errors matter) are already checked explicitly.
+### unused (15 issues)
 
-### gosec (10 issues)
-
-**Pattern 1**: G204 - Subprocess launched with variable (3 issues)
-**Status**: Intentional - launching editor and git commands with user-specified paths
+**Pattern**: Functions and variables marked as unused in production code
+**Status**: Used in tests - golangci-lint doesn't check test files by default
 
 Examples:
-- Launching `$EDITOR` for issue editing
-- Executing git commands
-- Running bd daemon binary
+- `readDaemonLockInfo()`, `validateDaemonLock()` in `cmd/bd/daemon_lock.go`
+- `fieldComparator` type and methods in `cmd/bd/import_shared.go`
+- `lastFlushError` variable in `cmd/bd/main.go`
+- `isNumeric()` function in `cmd/bd/import_shared.go`
+- Test helper functions in `internal/rpc/test_helpers.go` and `internal/storage/sqlite/test_helpers.go`
 
-**Pattern 2**: G304 - File inclusion via variable (3 issues)
-**Status**: Intended feature - user-specified file paths for import/export
-
-All file paths are either:
-- User-provided CLI arguments (expected for import/export commands)
-- Test fixtures in controlled test environments
-- Validated paths with security checks
-
-**Pattern 3**: G301/G302/G306 - File permissions (3 issues)
-**Status**: Acceptable for user-facing database files
-
-- G301: 0755 for database directories (allows other users to read)
-- G302: 0644 for JSONL files (version controlled, needs to be readable)
-- G306: 0644 for new JSONL files (consistency with existing files)
-
-**Pattern 4**: G115 - Integer overflow conversion (1 issue)
-**Status**: False positive - bounded by max retry count
-
-The exponential backoff calculation is bounded by a small retry counter, making overflow impossible in practice.
+**Rationale**: These functions are used in test files (`*_test.go`) but golangci-lint only analyzes production code by default. They are legitimate test utilities and should not be removed.
 
 ## golangci-lint Configuration Challenges
 
@@ -70,10 +47,10 @@ This appears to be a known limitation of golangci-lint's configuration system.
 
 ## Recommendation
 
-**For contributors**: Don't be alarmed by the 34 lint warnings. The code quality is high.
+**For contributors**: Don't be alarmed by the 16 lint warnings. The code quality is high.
 
 **For code review**: Focus on:
-- New issues introduced by changes (not the baseline 34)
+- New issues introduced by changes (not the baseline 16)
 - Actual logic errors
 - Missing error checks on critical operations (file writes, database commits)
 - Security concerns beyond gosec's false positives
@@ -90,8 +67,8 @@ Potential approaches to reduce noise:
 
 ## Summary
 
-These "issues" are not technical debt - they represent intentional, idiomatic Go code. The codebase maintains high quality through:
-- Comprehensive test coverage (>80%)
+These "issues" are not technical debt - they represent intentional, idiomatic Go code or legitimate test utilities. The codebase maintains high quality through:
+- Comprehensive test coverage (49.1% overall, higher in core packages)
 - Careful error handling where it matters
 - Security validation of user input
 - Clear documentation
