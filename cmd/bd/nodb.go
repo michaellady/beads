@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/steveyegge/beads"
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/storage/memory"
 	"github.com/steveyegge/beads/internal/types"
@@ -17,14 +18,9 @@ import (
 // initializeNoDbMode sets up in-memory storage from JSONL file
 // This is called when --no-db flag is set
 func initializeNoDbMode() error {
-	// Find .beads directory
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
-	}
-
-	beadsDir := filepath.Join(cwd, ".beads")
-	if _, err := os.Stat(beadsDir); os.IsNotExist(err) {
+	// Find .beads directory (follows redirect files)
+	beadsDir := beads.FindBeadsDir()
+	if beadsDir == "" {
 		return fmt.Errorf("no .beads directory found (hint: run 'bd init' first)")
 	}
 

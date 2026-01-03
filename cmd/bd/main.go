@@ -184,13 +184,38 @@ var rootCmd = &cobra.Command{
 					}
 				}
 
-				// If dbPath still not set, error out
+				// If dbPath still not set, check for beads directory with no database (no-db mode)
 				if dbPath == "" {
-					// No database found - error out instead of falling back to ~/.beads
-					fmt.Fprintf(os.Stderr, "Error: no beads database found\n")
-					fmt.Fprintf(os.Stderr, "Hint: run 'bd init' to create a database in the current directory\n")
-					fmt.Fprintf(os.Stderr, "      or set BEADS_DB environment variable to specify a database\n")
-					os.Exit(1)
+					// Check if a beads directory exists (following redirects)
+					if beadsDir := beads.FindBeadsDir(); beadsDir != "" {
+						// Found a beads directory but no database - switch to no-db mode
+						noDb = true
+						if os.Getenv("BD_DEBUG") != "" {
+							fmt.Fprintf(os.Stderr, "Debug: no database found in %s, using --no-db mode\n", beadsDir)
+						}
+						// Initialize no-db mode and return early
+						if err := initializeNoDbMode(); err != nil {
+							fmt.Fprintf(os.Stderr, "Error initializing --no-db mode: %v\n", err)
+							os.Exit(1)
+						}
+						// Set actor for audit trail
+						if actor == "" {
+							if bdActor := os.Getenv("BD_ACTOR"); bdActor != "" {
+								actor = bdActor
+							} else if user := os.Getenv("USER"); user != "" {
+								actor = user
+							} else {
+								actor = "unknown"
+							}
+						}
+						return // Skip daemon and SQLite initialization
+					} else {
+						// No beads directory found at all - error out
+						fmt.Fprintf(os.Stderr, "Error: no beads database found\n")
+						fmt.Fprintf(os.Stderr, "Hint: run 'bd init' to create a database in the current directory\n")
+						fmt.Fprintf(os.Stderr, "      or set BEADS_DB environment variable to specify a database\n")
+						os.Exit(1)
+					}
 				}
 			}
 		}

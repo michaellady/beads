@@ -137,6 +137,68 @@ func FindDatabasePath() string {
 	return ""
 }
 
+// FindBeadsDir discovers the .beads directory path, following redirect files.
+// This is useful for no-db mode where JSONL files are in the beads directory
+// but no database exists.
+//
+// Returns empty string if no .beads directory is found.
+func FindBeadsDir() string {
+	// 1. Check BEADS_DIR environment variable
+	if envDir := os.Getenv("BEADS_DIR"); envDir != "" {
+		return envDir
+	}
+
+	// 2. Search for .beads/ in current directory and ancestors
+	return findBeadsDirInTree()
+}
+
+// findBeadsDirInTree walks up the directory tree looking for .beads/
+// and follows redirect files to the actual beads directory.
+func findBeadsDirInTree() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+
+	// Walk up directory tree
+	for {
+		beadsDir := filepath.Join(dir, ".beads")
+		if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
+			// Check for redirect file - follow it to the actual beads directory
+			redirectFile := filepath.Join(beadsDir, "redirect")
+			if redirectContent, err := os.ReadFile(redirectFile); err == nil {
+				redirectPath := strings.TrimSpace(string(redirectContent))
+				if redirectPath != "" {
+					// Resolve relative path from the parent directory (containing .beads)
+					// The redirect path like "../../mayor/rig/.beads" is relative to
+					// the directory containing the .beads folder, not .beads itself
+					if !filepath.IsAbs(redirectPath) {
+						redirectPath = filepath.Join(dir, redirectPath)
+					}
+					// Clean the path to resolve .. components
+					redirectPath = filepath.Clean(redirectPath)
+					// Verify the redirected directory exists
+					if info, err := os.Stat(redirectPath); err == nil && info.IsDir() {
+						return redirectPath
+					}
+				}
+			}
+			// No redirect or redirect invalid - return this directory
+			return beadsDir
+		}
+
+		// Move up one directory
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Reached filesystem root
+			break
+		}
+		dir = parent
+	}
+
+	return ""
+}
+
 // FindJSONLPath returns the expected JSONL file path for the given database path.
 // It searches for existing *.jsonl files in the database directory and returns
 // the first one found, or defaults to "issues.jsonl".
@@ -182,6 +244,29 @@ func findDatabaseInTree() string {
 	for {
 		beadsDir := filepath.Join(dir, ".beads")
 		if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
+			// Check for redirect file first - follow it to the actual beads directory
+			redirectFile := filepath.Join(beadsDir, "redirect")
+			followedRedirect := false
+			if redirectContent, err := os.ReadFile(redirectFile); err == nil {
+				redirectPath := strings.TrimSpace(string(redirectContent))
+				if redirectPath != "" {
+					// Resolve relative path from the parent directory (containing .beads)
+					// The redirect path like "../../mayor/rig/.beads" is relative to
+					// the directory containing the .beads folder, not .beads itself
+					if !filepath.IsAbs(redirectPath) {
+						redirectPath = filepath.Join(dir, redirectPath)
+					}
+					// Clean the path to resolve .. components
+					redirectPath = filepath.Clean(redirectPath)
+					// Verify the redirected directory exists
+					if info, err := os.Stat(redirectPath); err == nil && info.IsDir() {
+						// Use the redirected beads directory
+						beadsDir = redirectPath
+						followedRedirect = true
+					}
+				}
+			}
+
 			// Check for config.json first (single source of truth)
 			if cfg, err := configfile.Load(beadsDir); err == nil && cfg != nil {
 				dbPath := cfg.DatabasePath(beadsDir)
@@ -238,6 +323,13 @@ func findDatabaseInTree() string {
 				return validDBs[0]
 			}
 		}
+
+			// If we followed a redirect, don't continue walking up the tree.
+			// The redirect is authoritative - if no database exists in the redirected
+			// location, return empty and let the caller handle it (e.g., use --no-db mode).
+			if followedRedirect {
+				return ""
+			}
 		}
 
 		// Move up one directory
@@ -267,6 +359,27 @@ func FindAllDatabases() []DatabaseInfo {
 	for {
 		beadsDir := filepath.Join(dir, ".beads")
 		if info, err := os.Stat(beadsDir); err == nil && info.IsDir() {
+			// Check for redirect file first - follow it to the actual beads directory
+			redirectFile := filepath.Join(beadsDir, "redirect")
+			if redirectContent, err := os.ReadFile(redirectFile); err == nil {
+				redirectPath := strings.TrimSpace(string(redirectContent))
+				if redirectPath != "" {
+					// Resolve relative path from the parent directory (containing .beads)
+					// The redirect path like "../../mayor/rig/.beads" is relative to
+					// the directory containing the .beads folder, not .beads itself
+					if !filepath.IsAbs(redirectPath) {
+						redirectPath = filepath.Join(dir, redirectPath)
+					}
+					// Clean the path to resolve .. components
+					redirectPath = filepath.Clean(redirectPath)
+					// Verify the redirected directory exists
+					if info, err := os.Stat(redirectPath); err == nil && info.IsDir() {
+						// Use the redirected beads directory
+						beadsDir = redirectPath
+					}
+				}
+			}
+
 			// Found .beads/ directory, look for *.db files
 			matches, err := filepath.Glob(filepath.Join(beadsDir, "*.db"))
 			if err == nil && len(matches) > 0 {
