@@ -48,7 +48,7 @@ func TestGenerateHashID(t *testing.T) {
 			
 			// Check all hex characters
 			for _, ch := range hash {
-				if !((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')) {
+				if (ch < '0' || ch > '9') && (ch < 'a' || ch > 'f') {
 					t.Errorf("non-hex character in hash: %c", ch)
 				}
 			}

@@ -18,7 +18,7 @@ type fieldComparator struct {
 
 func newFieldComparator() *fieldComparator {
 	fc := &fieldComparator{}
-	
+
 	fc.strFrom = func(v interface{}) (string, bool) {
 		switch t := v.(type) {
 		case string:
@@ -34,7 +34,7 @@ func newFieldComparator() *fieldComparator {
 			return "", false
 		}
 	}
-	
+
 	fc.intFrom = func(v interface{}) (int64, bool) {
 		switch t := v.(type) {
 		case int:
@@ -53,7 +53,7 @@ func newFieldComparator() *fieldComparator {
 			return 0, false
 		}
 	}
-	
+
 	return fc
 }
 
@@ -145,16 +145,21 @@ func (fc *fieldComparator) checkFieldChanged(key string, existing *types.Issue, 
 // Returns true if any field changed, false if all fields match
 func issueDataChanged(existing *types.Issue, updates map[string]interface{}) bool {
 	fc := newFieldComparator()
-	
+
 	// Check each field in updates map
 	for key, newVal := range updates {
 		if fc.checkFieldChanged(key, existing, newVal) {
 			return true
 		}
 	}
-	
+
 	return false // No changes detected
 }
+
+
+
+
+
 
 // ImportOptions configures how the import behaves
 type ImportOptions struct {
@@ -221,7 +226,6 @@ func importIssuesCore(ctx context.Context, dbPath string, store storage.Storage,
 	}, nil
 }
 
-
 // isNumeric returns true if the string contains only digits
 func isNumeric(s string) bool {
 	for i := 0; i < len(s); i++ {
@@ -231,3 +235,6 @@ func isNumeric(s string) bool {
 	}
 	return true
 }
+
+
+

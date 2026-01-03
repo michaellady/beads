@@ -100,10 +100,11 @@ func (h *labelTestHelper) assertLabelEvent(issueID string, eventType types.Event
 		h.t.Fatalf("Failed to get events: %v", err)
 	}
 	
-	expectedComment := ""
-	if eventType == types.EventLabelAdded {
+	var expectedComment string
+	switch eventType {
+	case types.EventLabelAdded:
 		expectedComment = "Added label: " + labelName
-	} else if eventType == types.EventLabelRemoved {
+	case types.EventLabelRemoved:
 		expectedComment = "Removed label: " + labelName
 	}
 	

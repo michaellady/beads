@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/steveyegge/beads"
 	"github.com/steveyegge/beads/internal/config"
 	"github.com/steveyegge/beads/internal/storage/memory"
 	"github.com/steveyegge/beads/internal/types"
@@ -17,14 +18,9 @@ import (
 // initializeNoDbMode sets up in-memory storage from JSONL file
 // This is called when --no-db flag is set
 func initializeNoDbMode() error {
-	// Find .beads directory
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
-	}
-
-	beadsDir := filepath.Join(cwd, ".beads")
-	if _, err := os.Stat(beadsDir); os.IsNotExist(err) {
+	// Find .beads directory (follows redirect files)
+	beadsDir := beads.FindBeadsDir()
+	if beadsDir == "" {
 		return fmt.Errorf("no .beads directory found (hint: run 'bd init' first)")
 	}
 
@@ -54,7 +50,7 @@ func initializeNoDbMode() error {
 	}
 
 	// Detect and set prefix
-	prefix, err := detectPrefix(beadsDir, memStore)
+	prefix, err := detectPrefix(memStore)
 	if err != nil {
 		return fmt.Errorf("failed to detect prefix: %w", err)
 	}
@@ -75,11 +71,11 @@ func initializeNoDbMode() error {
 
 // loadIssuesFromJSONL reads all issues from a JSONL file
 func loadIssuesFromJSONL(path string) ([]*types.Issue, error) {
-	file, err := os.Open(path)
+	file, err := os.Open(path) // #nosec G304 - path from internal findJSONLPath()
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var issues []*types.Issue
 	scanner := bufio.NewScanner(file)
@@ -114,7 +110,7 @@ func loadIssuesFromJSONL(path string) ([]*types.Issue, error) {
 // 1. issue-prefix from config.yaml (if set)
 // 2. Common prefix from existing issues (if all share same prefix)
 // 3. Current directory name (fallback)
-func detectPrefix(beadsDir string, memStore *memory.MemoryStorage) (string, error) {
+func detectPrefix(memStore *memory.MemoryStorage) (string, error) {
 	// Check config.yaml for issue-prefix
 	configPrefix := config.GetString("issue-prefix")
 	if configPrefix != "" {

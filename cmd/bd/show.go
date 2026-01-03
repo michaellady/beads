@@ -600,18 +600,18 @@ Examples:
 			os.Exit(1)
 		}
 		tmpPath := tmpFile.Name()
-		defer os.Remove(tmpPath)
+		defer func() { _ = os.Remove(tmpPath) }()
 
 		// Write current value to temp file
 		if _, err := tmpFile.WriteString(currentValue); err != nil {
-			tmpFile.Close()
+			_ = tmpFile.Close()
 			fmt.Fprintf(os.Stderr, "Error writing to temp file: %v\n", err)
 			os.Exit(1)
 		}
-		tmpFile.Close()
+		_ = tmpFile.Close()
 
 		// Open the editor
-		editorCmd := exec.Command(editor, tmpPath)
+		editorCmd := exec.Command(editor, tmpPath) // #nosec G204 - editor from EDITOR env var (user-controlled)
 		editorCmd.Stdin = os.Stdin
 		editorCmd.Stdout = os.Stdout
 		editorCmd.Stderr = os.Stderr
@@ -622,7 +622,7 @@ Examples:
 		}
 
 		// Read the edited content
-		editedContent, err := os.ReadFile(tmpPath)
+		editedContent, err := os.ReadFile(tmpPath) // #nosec G304 - tmpPath is temporary file we created
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error reading edited file: %v\n", err)
 			os.Exit(1)

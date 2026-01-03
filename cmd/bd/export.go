@@ -277,7 +277,7 @@ Output to stdout by default, or use -o flag for file output.`,
 			clearAutoFlushState()
 			
 			// Store JSONL file hash for integrity validation (bd-160)
-			jsonlData, err := os.ReadFile(finalPath)
+			jsonlData, err := os.ReadFile(finalPath) // #nosec G304 - finalPath from command line -o flag or internal path
 			if err == nil {
 				hasher := sha256.New()
 				hasher.Write(jsonlData)

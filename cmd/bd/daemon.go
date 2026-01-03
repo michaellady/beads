@@ -806,7 +806,7 @@ func importToJSONLWithStore(ctx context.Context, store storage.Storage, jsonlPat
 	if err != nil {
 		return fmt.Errorf("failed to open JSONL: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	
 	// Parse all issues
 	var issues []*types.Issue
@@ -870,23 +870,16 @@ func validateDatabaseFingerprint(store storage.Storage, log *daemonLogger) error
 
 	// If no repo_id, this is a legacy database - require explicit migration
 	if storedRepoID == "" {
-		return fmt.Errorf(`
-LEGACY DATABASE DETECTED!
-
-This database was created before version 0.17.5 and lacks a repository fingerprint.
-To continue using this database, you must explicitly set its repository ID:
-
-  bd migrate --update-repo-id
-
-This ensures the database is bound to this repository and prevents accidental
-database sharing between different repositories.
-
-If this is a fresh clone, run:
-  rm -rf .beads && bd init
-
-Note: Auto-claiming legacy databases is intentionally disabled to prevent
-silent corruption when databases are copied between repositories.
-`)
+		return fmt.Errorf("LEGACY DATABASE DETECTED!\n\n" +
+			"This database was created before version 0.17.5 and lacks a repository fingerprint.\n" +
+			"To continue using this database, you must explicitly set its repository ID:\n\n" +
+			"  bd migrate --update-repo-id\n\n" +
+			"This ensures the database is bound to this repository and prevents accidental\n" +
+			"database sharing between different repositories.\n\n" +
+			"If this is a fresh clone, run:\n" +
+			"  rm -rf .beads && bd init\n\n" +
+			"Note: Auto-claiming legacy databases is intentionally disabled to prevent\n" +
+			"silent corruption when databases are copied between repositories")
 	}
 
 	// Validate repo ID matches current repository
@@ -897,26 +890,22 @@ silent corruption when databases are copied between repositories.
 	}
 
 	if storedRepoID != currentRepoID {
-		return fmt.Errorf(`
-DATABASE MISMATCH DETECTED!
-
-This database belongs to a different repository:
-  Database repo ID:  %s
-  Current repo ID:   %s
-
-This usually means:
-  1. You copied a .beads directory from another repo (don't do this!)
-  2. Git remote URL changed (run 'bd migrate --update-repo-id')
-  3. Database corruption
-  4. bd was upgraded and URL canonicalization changed
-
-Solutions:
-  - If remote URL changed: bd migrate --update-repo-id
-  - If bd was upgraded: bd migrate --update-repo-id
-  - If wrong database: rm -rf .beads && bd init
-  - If correct database: BEADS_IGNORE_REPO_MISMATCH=1 bd daemon
-    (Warning: This can cause data corruption across clones!)
-`, storedRepoID[:8], currentRepoID[:8])
+		return fmt.Errorf("DATABASE MISMATCH DETECTED!\n\n"+
+			"This database belongs to a different repository:\n"+
+			"  Database repo ID:  %s\n"+
+			"  Current repo ID:   %s\n\n"+
+			"This usually means:\n"+
+			"  1. You copied a .beads directory from another repo (don't do this!)\n"+
+			"  2. Git remote URL changed (run 'bd migrate --update-repo-id')\n"+
+			"  3. Database corruption\n"+
+			"  4. bd was upgraded and URL canonicalization changed\n\n"+
+			"Solutions:\n"+
+			"  - If remote URL changed: bd migrate --update-repo-id\n"+
+			"  - If bd was upgraded: bd migrate --update-repo-id\n"+
+			"  - If wrong database: rm -rf .beads && bd init\n"+
+			"  - If correct database: BEADS_IGNORE_REPO_MISMATCH=1 bd daemon\n"+
+			"    (Warning: This can cause data corruption across clones!)",
+			storedRepoID[:8], currentRepoID[:8])
 	}
 
 	log.log("Repository fingerprint validated: %s", currentRepoID[:8])
@@ -1412,7 +1401,7 @@ func runDaemonLoop(interval time.Duration, autoCommit, autoPush bool, logPath, p
 			
 			// Write error to file so user can see it without checking logs
 			errFile := filepath.Join(beadsDir, "daemon-error")
-			if err := os.WriteFile(errFile, []byte(errMsg), 0644); err != nil {
+			if err := os.WriteFile(errFile, []byte(errMsg), 0600); err != nil { // #nosec G306 - restricted to user only
 				log.log("Warning: could not write daemon-error file: %v", err)
 			}
 			

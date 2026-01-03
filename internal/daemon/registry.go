@@ -34,7 +34,7 @@ func NewRegistry() (*Registry, error) {
 	}
 
 	beadsDir := filepath.Join(home, ".beads")
-	if err := os.MkdirAll(beadsDir, 0755); err != nil {
+	if err := os.MkdirAll(beadsDir, 0750); err != nil { // #nosec G301 - restricted to user+group only
 		return nil, fmt.Errorf("failed to create .beads directory: %w", err)
 	}
 
@@ -78,7 +78,7 @@ func (r *Registry) writeEntries(entries []RegistryEntry) error {
 		return fmt.Errorf("failed to marshal registry: %w", err)
 	}
 
-	if err := os.WriteFile(r.path, data, 0644); err != nil {
+	if err := os.WriteFile(r.path, data, 0600); err != nil { // #nosec G306 - restricted to user only
 		return fmt.Errorf("failed to write registry: %w", err)
 	}
 

@@ -56,7 +56,7 @@ func runEventDrivenLoop(
 		defer fallbackTicker.Stop()
 	} else {
 		watcher.Start(ctx, log)
-		defer watcher.Close()
+		defer func() { _ = watcher.Close() }()
 	}
 
 	// Handle mutation events from RPC server
@@ -126,7 +126,7 @@ func runEventDrivenLoop(
 		case <-ctx.Done():
 			log.log("Context canceled, shutting down")
 			if watcher != nil {
-				watcher.Close()
+				_ = watcher.Close()
 			}
 			if err := server.Stop(); err != nil {
 				log.log("Error stopping server: %v", err)
@@ -137,7 +137,7 @@ func runEventDrivenLoop(
 		log.log("RPC server failed: %v", err)
 		cancel()
 		if watcher != nil {
-		watcher.Close()
+		_ = watcher.Close()
 		}
 		if stopErr := server.Stop(); stopErr != nil {
 			log.log("Error stopping server: %v", stopErr)

@@ -110,7 +110,7 @@ func TestDetectPrefix(t *testing.T) {
 			t.Fatalf("Failed to load issues: %v", err)
 		}
 
-		prefix, err := detectPrefix(beadsDir, memStore)
+		prefix, err := detectPrefix(memStore)
 		if err != nil {
 			t.Fatalf("detectPrefix failed: %v", err)
 		}
@@ -130,7 +130,7 @@ func TestDetectPrefix(t *testing.T) {
 			t.Fatalf("Failed to load issues: %v", err)
 		}
 
-		_, err := detectPrefix(beadsDir, memStore)
+		_, err := detectPrefix(memStore)
 		if err == nil {
 			t.Error("Expected error for mixed prefixes, got nil")
 		}
@@ -149,7 +149,7 @@ func TestDetectPrefix(t *testing.T) {
 		defer func() { _ = os.Chdir(origWd) }()
 
 		memStore := memory.New(filepath.Join(beadsDir, "issues.jsonl"))
-		prefix, err := detectPrefix(beadsDir, memStore)
+		prefix, err := detectPrefix(memStore)
 		if err != nil {
 			t.Fatalf("detectPrefix failed: %v", err)
 		}

@@ -117,7 +117,7 @@ func restartDaemonForVersionMismatch() bool {
 	}
 
 	args := []string{"daemon"}
-	cmd := exec.Command(exe, args...)
+	cmd := exec.Command(exe, args...) // #nosec G204 - exe is from os.Executable(), args are hardcoded
 	cmd.Env = append(os.Environ(), "BD_DAEMON_FOREGROUND=1")
 
 	// Set working directory to database directory so daemon finds correct DB
@@ -212,7 +212,7 @@ func isDaemonHealthy(socketPath string) bool {
 }
 
 func acquireStartLock(lockPath, socketPath string) bool {
-	lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600) // #nosec G304 - lockPath from internal function
 	if err != nil {
 		debugLog("another process is starting daemon, waiting for readiness")
 		if waitForSocketReadiness(socketPath, 5*time.Second) {
@@ -292,7 +292,7 @@ func startDaemonProcess(socketPath string, isGlobal bool) bool {
 		args = append(args, "--global")
 	}
 
-	cmd := exec.Command(binPath, args...)
+	cmd := exec.Command(binPath, args...) // #nosec G204 - binPath from findBdExecutable(), args are hardcoded
 	setupDaemonIO(cmd)
 
 	if !isGlobal && dbPath != "" {
@@ -340,7 +340,7 @@ func getPIDFileForSocket(socketPath string) string {
 
 // readPIDFromFile reads a PID from a file
 func readPIDFromFile(path string) (int, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 - path from internal getPIDPath()
 	if err != nil {
 		return 0, err
 	}
@@ -389,6 +389,7 @@ func canRetryDaemonStart() bool {
 	}
 
 	// Exponential backoff: 5s, 10s, 20s, 40s, 80s, 120s (capped at 120s)
+	// #nosec G115 - daemonStartFailures is always positive and small (<10), no overflow risk
 	backoff := time.Duration(5*(1<<uint(daemonStartFailures-1))) * time.Second
 	if backoff > 120*time.Second {
 		backoff = 120 * time.Second

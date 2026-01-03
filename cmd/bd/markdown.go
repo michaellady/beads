@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/spf13/cobra"
 	"github.com/steveyegge/beads/internal/types"
 )
 
@@ -330,7 +329,7 @@ func parseMarkdownFile(path string) ([]*IssueTemplate, error) {
 }
 
 // createIssuesFromMarkdown parses a markdown file and creates multiple issues from it
-func createIssuesFromMarkdown(cmd *cobra.Command, filepath string) {
+func createIssuesFromMarkdown(filepath string) {
 	// Parse markdown file
 	templates, err := parseMarkdownFile(filepath)
 	if err != nil {

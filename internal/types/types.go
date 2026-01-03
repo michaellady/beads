@@ -53,7 +53,7 @@ func (i *Issue) ComputeContentHash() string {
 	h.Write([]byte{0})
 	h.Write([]byte(i.Status))
 	h.Write([]byte{0})
-	h.Write([]byte(fmt.Sprintf("%d", i.Priority)))
+	fmt.Fprintf(h, "%d", i.Priority)
 	h.Write([]byte{0})
 	h.Write([]byte(i.IssueType))
 	h.Write([]byte{0})

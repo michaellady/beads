@@ -163,7 +163,7 @@ func discoverDaemon(socketPath string) DaemonInfo {
 		}
 		return daemon
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// Get status
 	status, err := client.Status()
@@ -217,8 +217,8 @@ func checkDaemonErrorFile(socketPath string) string {
 	// Socket path is typically .beads/bd.sock, so get the parent dir
 	beadsDir := filepath.Dir(socketPath)
 	errFile := filepath.Join(beadsDir, "daemon-error")
-	
-	data, err := os.ReadFile(errFile)
+
+	data, err := os.ReadFile(errFile) // #nosec G304 - path constructed from internal socketPath
 	if err != nil {
 		return ""
 	}
@@ -243,12 +243,8 @@ func CleanupStaleSockets(daemons []DaemonInfo) (int, error) {
 			// Also remove associated PID file if it exists
 			socketDir := filepath.Dir(daemon.SocketPath)
 			pidFile := filepath.Join(socketDir, "daemon.pid")
-			if err := os.Remove(pidFile); err != nil {
-				// Ignore errors for PID file - it may not exist
-				if !os.IsNotExist(err) {
-					// Log warning but don't fail
-				}
-			}
+			// Ignore all PID file removal errors - it may not exist
+			_ = os.Remove(pidFile)
 		}
 	}
 	return cleaned, nil
@@ -264,7 +260,7 @@ func StopDaemon(daemon DaemonInfo) error {
 	// Try graceful shutdown via RPC first
 	client, err := rpc.TryConnectWithTimeout(daemon.SocketPath, 500*time.Millisecond)
 	if err == nil && client != nil {
-		defer client.Close()
+		defer func() { _ = client.Close() }()
 		if err := client.Shutdown(); err == nil {
 			// Wait a bit for daemon to shut down
 			time.Sleep(200 * time.Millisecond)
@@ -334,7 +330,7 @@ func stopDaemonWithTimeout(daemon DaemonInfo) error {
 	// Try RPC shutdown first (2 second timeout)
 	client, err := rpc.TryConnectWithTimeout(daemon.SocketPath, 2*time.Second)
 	if err == nil && client != nil {
-		defer client.Close()
+		defer func() { _ = client.Close() }()
 		if err := client.Shutdown(); err == nil {
 			// Wait and verify process died
 			time.Sleep(500 * time.Millisecond)

@@ -129,13 +129,13 @@ func TestHashIDs_IdenticalContentDedup(t *testing.T) {
 func setupBareRepo(t *testing.T, tmpDir string) string {
 	t.Helper()
 	remoteDir := filepath.Join(tmpDir, "remote.git")
-	runCmd(t, tmpDir, "git", "init", "--bare", remoteDir)
-	
+	runCmd(t, tmpDir, "git", "init", "--bare", "--initial-branch=main", remoteDir)
+
 	tempClone := filepath.Join(tmpDir, "temp-init")
 	runCmd(t, tmpDir, "git", "clone", remoteDir, tempClone)
 	runCmd(t, tempClone, "git", "commit", "--allow-empty", "-m", "Initial commit")
-	runCmd(t, tempClone, "git", "push", "origin", "master")
-	
+	runCmd(t, tempClone, "git", "push", "origin", "main")
+
 	return remoteDir
 }
 
@@ -149,9 +149,9 @@ func setupClone(t *testing.T, tmpDir, remoteDir, name, bdPath string) string {
 		runCmd(t, cloneDir, "./bd", "init", "--quiet", "--prefix", "test")
 		runCmd(t, cloneDir, "git", "add", ".beads")
 		runCmd(t, cloneDir, "git", "commit", "-m", "Initialize beads")
-		runCmd(t, cloneDir, "git", "push", "origin", "master")
+		runCmd(t, cloneDir, "git", "push", "origin", "main")
 	} else {
-		runCmd(t, cloneDir, "git", "pull", "origin", "master")
+		runCmd(t, cloneDir, "git", "pull", "origin", "main")
 		runCmd(t, cloneDir, "./bd", "init", "--quiet", "--prefix", "test")
 	}
 	
